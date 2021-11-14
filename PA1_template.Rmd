@@ -6,8 +6,10 @@ output:
 ---
 
 ```{r, results="hide"}
-library(dplyr)
 library(ggplot2)
+library(lattice)
+library(dplyr)
+library(lubridate)
 ```
 
 
@@ -137,3 +139,32 @@ The mean of steps per day is **`r mean_steps_with_missing`** and the median is
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+We create a new dataframe from the activities with missing values estimated and 
+a new column :
+
+- day : factor that can tkae the values weekday or weekend
+
+```{r, echo=TRUE}
+activities_days <- activities_no_missing %>% 
+  mutate(day = ifelse(wday(date) %in% c(1,7), "weekend", "weekday"))
+activities_days$day <- as.factor(activities_days$day)
+mean_steps_per_interval_day <- distinct(activities_days %>% 
+  group_by(interval, day) %>% 
+  mutate(steps = mean(steps)) %>% 
+  ungroup() %>%
+  select(interval, steps, day))
+```
+
+
+```{r, echo=TRUE}
+xyplot(steps~interval | day, 
+       data = mean_steps_per_interval_day, 
+       layout = c(1,2), 
+       ylab = "Number of steps", 
+       xlab = "Interval", 
+       type = 'l',
+       main = "Average number of steps per interval in weekend and weekday")
+```
+
+
