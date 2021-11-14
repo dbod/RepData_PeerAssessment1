@@ -14,28 +14,31 @@ library(lubridate)
 
 
 ## Loading and preprocessing the data
-The data analysed are described in the csv file `data/activity.csv`. The dataset 
-contains three columns :
+The data analysed are described in the csv file `data/activity.csv`. These data are 
+loaded in the dataset _activities_.
 
-* date : date of the measurement  
-* interval : identifier for the 5 minutes interval in which the measurement was taken  
-* steps : the number of steps for that date and that interval  
+Three variables are described in _activities_ : 
 
-The date is trabsformed from a string to a date class.  
-The result is saved as the `activities` dataframe.
+- date [Date] : date of the measurement in the format "yyyy/MM/dd"  
+- interval [int] : identifier for the 5 minutes interval in which the measurement was taken  
+- steps [int] : the number of steps for that date and that interval  
+
 ```{r, echo=TRUE}
 activities <- read.csv("data/activity.csv") %>%
   mutate(date = as.Date(date))
+
 print(str(activities))
 print(summary(activities))
 ```
 
 ## What is mean total number of steps taken per day?
-We build a new dataframe from the _activities_ cleaned from all the missing values.  
-The new dataframe contains two columns :
+A new dataframe, _steps_per_day_, is created from _activities_. This dataframe 
+contains two variables :
 
-* date : the day in which the measurements are taken  
-* steps : the total number of steps for that day  
+- date [Date] : the day in which the measurements was taken  
+- steps [int] : the total number of steps for that day  
+
+_steps_per_day_ is cleaned from all missing values in _activitoes_.
 
 ```{r, echo=TRUE}
 steps_per_day <- activities[complete.cases(activities),] %>% 
@@ -61,20 +64,24 @@ median_steps <- median(steps_per_day$steps)
 The mean of steps per day is **`r mean_steps`** and the median is **`r median_steps`**.
 
 ## What is the average daily activity pattern?
+The dataframe _average_steps_per_interval_ is created from _activities_ (cleaned 
+from its missing values) : 
 
-We build a new dataframe describing the average steps per interval. From that dataframe, we can get the optimized interval for the number of steps per day.
+- interval [int] : identifier for the 5 minutes interval in which the measurement was taken 
+- steps [int] : the mean value of steps for that interval
 
 ```{r, echo=TRUE}
 average_steps_per_interval <- activities[complete.cases(activities),] %>% 
   select(interval, steps) %>%
   group_by(interval) %>%
   summarise(steps = mean(steps))
-max_interval = average_steps_per_interval %>%
-  filter(steps >= max(steps))
 ```
 
-
+The dataframe is shown in a line graph below, showing the maximum value.
 ```{r, echo=TRUE}
+max_interval = average_steps_per_interval %>%
+  filter(steps >= max(steps))
+
 p <- ggplot(average_steps_per_interval, aes(interval, steps)) +
     geom_line(linetype = "solid") +
     ggtitle("Average number of steps per interval") +
@@ -99,9 +106,9 @@ for all days with an average value of **`r format(max_interval$steps[1], scienti
 number_NA_values = count(activities[is.na(activities),])[1, 1]
 ```
 
-We have `r number_NA_values` missing values in the original dataframe of activities.  
-We build a new dataframe from activities by replacing the missing values with the 
-median value of the corresponding interval.
+We have `r number_NA_values` missing values in _activities_, the original dataframe.  
+The dataframe _activities_no_missing_ is created from _activities_ by replacing 
+the missing values with the median value of the corresponding interval.  
 
 ```{r, echo=TRUE}
 activities_no_missing <- activities %>% 
@@ -114,6 +121,11 @@ activities_no_missing <- activities %>%
   select(date, interval, steps)
 ```
 
+The dataframe _steps_per_day_with_missing_ is built from _activities_no_missing_ :
+
+- date [Date] : the day in which the measurements was taken  
+- steps [int] : the total number of steps for that day  
+
 ```{r, echo=TRUE}
 steps_per_day_with_missing <- activities_no_missing %>% 
   select(date, steps) %>%
@@ -121,10 +133,11 @@ steps_per_day_with_missing <- activities_no_missing %>%
   summarise(steps = sum(steps))
 ```
 
+The results are shown in the following history plot.  
 ```{r, echo=TRUE}
 p <- ggplot(steps_per_day_with_missing, aes(date, steps)) +
     geom_bar(stat="identity", na.rm = TRUE) +
-    ggtitle("Number of steps per day\n(missing values are replaced with mean of interval)") +
+    ggtitle("Number of steps per day\n(missing values are replaced with median of the interval)") +
     xlab("Date") + 
     ylab("Number of steps")
 p
@@ -137,13 +150,12 @@ median_steps_with_missing <- format(median(steps_per_day_with_missing$steps), sc
 The mean of steps per day is **`r mean_steps_with_missing`** and the median is 
 **`r median_steps_with_missing`**.
 
-
 ## Are there differences in activity patterns between weekdays and weekends?
+The dataframe _mean_steps_per_interval_day_ is created from _activities_no_missing_ :
 
-We create a new dataframe from the activities with missing values estimated and 
-a new column :
-
-- day : factor that can tkae the values weekday or weekend
+- day [Factor] : weekday or weekend depending on the date 
+- interval [int] : identifier for the 5 minutes interval in which the measurement was taken 
+- steps [int] : the mean value of steps for that day and interval
 
 ```{r, echo=TRUE}
 activities_days <- activities_no_missing %>% 
@@ -156,7 +168,7 @@ mean_steps_per_interval_day <- distinct(activities_days %>%
   select(interval, steps, day))
 ```
 
-
+The results are shown in the graph below :
 ```{r, echo=TRUE}
 xyplot(steps~interval | day, 
        data = mean_steps_per_interval_day, 
@@ -167,4 +179,6 @@ xyplot(steps~interval | day,
        main = "Average number of steps per interval in weekend and weekday")
 ```
 
+The number of steps is globally higher during the weekend compare to the rest of 
+the week.
 
