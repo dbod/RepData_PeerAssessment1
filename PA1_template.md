@@ -93,7 +93,7 @@ contains two variables :
 - date [Date] : the day in which the measurements was taken  
 - steps [int] : the total number of steps for that day  
 
-_steps_per_day_ is cleaned from all missing values in _activitoes_.
+_steps_per_day_ is cleaned from all missing values in _activities_.
 
 
 ```r
@@ -103,23 +103,24 @@ steps_per_day <- activities[complete.cases(activities),] %>%
   summarise(steps = sum(steps))
 ```
 
-The results are shown in the following history plot.  
+The results are shown in the following history plot. A binwith of 2000 steps is chosen.  
 
 ```r
-p <- ggplot(steps_per_day, aes(date, steps)) +
-    geom_bar(stat="identity", na.rm = TRUE) +
+p <- ggplot(steps_per_day, aes(steps)) +
+    geom_histogram(binwidth = 2000, color="black", fill="darkred", alpha = 0.5) +
     ggtitle("Number of steps per day") +
-    xlab("Date") + 
-    ylab("Number of steps")
+    xlab("Number of steps") + 
+    ylab("Frequency")
 p
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
 
 
+
 ```r
 mean_steps <- format(mean(steps_per_day$steps), scientific=FALSE)
-median_steps <- median(steps_per_day$steps)
+median_steps <- format(median(steps_per_day$steps), scientific=FALSE)
 ```
 The mean of steps per day is **10766.19** and the median is **10765**.
 
@@ -173,13 +174,13 @@ number_NA_values = count(activities[is.na(activities),])[1, 1]
 
 We have 2304 missing values in _activities_, the original dataframe.  
 The dataframe _activities_no_missing_ is created from _activities_ by replacing 
-the missing values with the median value of the corresponding interval.  
+the missing values with the **mean value of the corresponding interval**.  
 
 
 ```r
 activities_no_missing <- activities %>% 
   group_by(interval) %>% 
-  mutate(avg.Interval = median(steps, na.rm = TRUE)) %>%
+  mutate(avg.Interval = mean(steps, na.rm = TRUE)) %>%
   ungroup() %>%
   group_by(date) %>%
   mutate(steps = ifelse(is.na(steps), avg.Interval, steps)) %>%
@@ -200,26 +201,27 @@ steps_per_day_with_missing <- activities_no_missing %>%
   summarise(steps = sum(steps))
 ```
 
-The results are shown in the following history plot.  
+The results are shown in the following history plot. A binwith of 2000 steps is chosen. 
 
 ```r
-p <- ggplot(steps_per_day_with_missing, aes(date, steps)) +
-    geom_bar(stat="identity", na.rm = TRUE) +
-    ggtitle("Number of steps per day\n(missing values are replaced with median of the interval)") +
-    xlab("Date") + 
-    ylab("Number of steps")
+p <- ggplot(steps_per_day_with_missing, aes(steps)) +
+    geom_histogram(binwidth = 2000, color="black", fill="darkred", alpha = 0.5) +
+    ggtitle("Number of steps per day\n(missing values are replaced with mean of the interval)") +
+    xlab("Number of steps") + 
+    ylab("Frequency")
 p
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 
+
 ```r
 mean_steps_with_missing <- format(mean(steps_per_day_with_missing$steps), scientific=FALSE)
 median_steps_with_missing <- format(median(steps_per_day_with_missing$steps), scientific = FALSE)
 ```
-The mean of steps per day is **9503.869** and the median is 
-**10395**.
+The mean of steps per day is **10766.19** and the median is 
+**10766.19**.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 The dataframe _mean_steps_per_interval_day_ is created from _activities_no_missing_ :
